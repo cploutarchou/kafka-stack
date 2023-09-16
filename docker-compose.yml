@@ -35,12 +35,8 @@ services:
       - 8.8.8.8
       - 4.4.4.4        
     restart: always
-    # networks:
-      # kafka-net:
-        # ipv4_address: 10.0.0.12
     volumes:
       - ./config/kafka02/server.properties:/kafka/config/kraft/server.properties
-      #- ./data/data_kafka_02:/kafka-data/kraft-combined-logs
       - data_kafka_02:/kafka-data/kraft-combined-logs
     networks:
       kafka-net:
