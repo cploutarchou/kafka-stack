@@ -1,5 +1,10 @@
 version: "3.8"
-
+networks:
+  kafka-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
 services:
   kafka01:
     container_name: kafka01
@@ -12,10 +17,12 @@ services:
       - 8.8.8.8
       - 4.4.4.4
     restart: always
-
     volumes:
       - ./config/kafka01/server.properties:/kafka/config/kraft/server.properties
       - data_kafka_01:/kafka-data/kraft-combined-logs
+    networks:
+      kafka-net:
+        ipv4_address: 10.0.0.11
 
   kafka02:
     container_name: kafka02
@@ -35,6 +42,9 @@ services:
       - ./config/kafka02/server.properties:/kafka/config/kraft/server.properties
       #- ./data/data_kafka_02:/kafka-data/kraft-combined-logs
       - data_kafka_02:/kafka-data/kraft-combined-logs
+    networks:
+      kafka-net:
+        ipv4_address: 10.0.0.12
 
   kafka03:
     container_name: kafka03
@@ -47,23 +57,26 @@ services:
       - 8.8.8.8
       - 4.4.4.4
     restart: always
-    # networks:
-      # kafka-net:
-        # ipv4_address: 10.0.0.13
+
     volumes:
       - ./config/kafka03/server.properties:/kafka/config/kraft/server.properties
-      #- ./data/data_kafka_03:/kafka-data/kraft-combined-logs
       - data_kafka_03:/kafka-data/kraft-combined-logs
-
-  my-kafka-ui:
-    image: provectuslabs/kafka-ui
-    container_name: kafka-ui
+    networks:
+      kafka-net:
+        ipv4_address: 10.0.0.13
+  kafkadrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
     ports:
-      - "8082:8080"
+      - "127.0.0.1:9000:9000"
     restart: always
     environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka01:9092,kafka02:9092,kafka03:9092
+      - KAFKA_BROKERCONNECT=kafka01:9092,kafka02:9092,kafka03:9092
+      - JAVA_OPTS=-Xms32M -Xmx64M
+      - SERVER_SERVLET_CONTEXTPATH=/
+    networks:
+      - kafka-net
+
 
   kafka-kouncil:
     image: consdata/kouncil:1.4
@@ -73,6 +86,9 @@ services:
     restart: always
     environment:
       - BOOTSTRAPSERVERS=kafka01:9092,kafka02:9092,kafka03:9092
+    networks:
+      - kafka-net
+
 
 volumes:
   data_kafka_01:
